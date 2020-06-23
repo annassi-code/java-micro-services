@@ -13,8 +13,8 @@ import java.util.List;
 public class ProductController {
 
 
-    @GetMapping("products/user/{userid}")
-    public ProductList getAll(@PathVariable("userid") int userid) {
+    @GetMapping("/products")
+    public ProductList getAll() {
         return new ProductList(Arrays.asList(
                 new Product(1, "Product 1" , 3),
                 new Product(2, "Product 2", 1),

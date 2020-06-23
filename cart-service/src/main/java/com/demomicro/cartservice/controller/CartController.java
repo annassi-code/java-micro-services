@@ -1,40 +1,53 @@
 package com.demomicro.cartservice.controller;
 
-import com.demomicro.cartservice.model.Categorie;
+import com.demomicro.cartservice.model.Category;
 import com.demomicro.cartservice.model.Product;
 import com.demomicro.cartservice.model.ProductItem;
-import com.demomicro.cartservice.model.ProductList;
+import com.demomicro.cartservice.service.CartService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
+import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
+@EnableCircuitBreaker
+@EnableHystrixDashboard
 public class CartController {
 
-    RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    CartService cartService;
+    @Autowired
+    RestTemplate restTemplate;
 
-    @GetMapping("carts/{userid}")
-    public List<ProductItem> getAll(@PathVariable("userid") int userid) {
+    @GetMapping("/carts")
+    public List<ProductItem> getAll() {
+
         List<ProductItem> productItems = new ArrayList<>();
-
-        restTemplate.getForObject("http://localhost:8082/products/user/"+userid, ProductList.class)
-                .getProducts().stream().forEach( p -> {
-                    ProductItem pi = new ProductItem();
-                    pi.setId(p.getId());
-                    pi.setProduct_name(p.getName());
-
-                    Categorie c = restTemplate.getForObject("http://localhost:8081/categories/"+p.getCategorie_id(), Categorie.class);
-                    pi.setCategory_name(c.getName());
-                    productItems.add(pi);
-                });
-
+        for (Product product : cartService.getProductList().getProducts()) {
+            Category category = getCategory(product);
+            ProductItem productItem = new ProductItem();
+            productItem.setCategoryName(category.getName());
+            productItem.setId(product.getId());
+            productItem.setProductName(product.getName());
+            productItems.add(productItem);
+        }
         return productItems;
+
     }
 
+    public Category getCategory(Product product) {
+        return restTemplate.getForObject("http://categories-service/categories/" + product.getCategoryId(), Category.class);
+    }
+
+    public Category getCategoryError(Product product) {
+
+        return new Category(-1, "error");
+
+    }
 
 }

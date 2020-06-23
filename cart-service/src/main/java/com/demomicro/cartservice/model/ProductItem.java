@@ -8,9 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class ProductItem {
     private int id;
-    private String product_name;
-    private String category_name;
+    private String productName;
+    private String categoryName;
 }
